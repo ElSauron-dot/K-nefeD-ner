@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KünefeDöner</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f8f8f8; margin: 0; padding: 0; }
+  #chef {
+    position: fixed; bottom: 10px; right: 10px; width: 120px;
+  }
+  #score {
+    position: fixed; top: 10px; left: 10px;
+    font-weight: bold; font-size: 20px; color: #333;
+  }
+  #customer-selection, #ingredient-selection, #end-screen {
+    max-width: 600px; margin: 40px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; text-align: center;
+  }
+  button {
+    font-size: 18px; padding: 10px 20px; margin: 10px;
+    cursor: pointer;
+  }
+  #ingredients-list {
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  #chef-message {
+    color: red;
+    margin-top: 20px;
+    font-weight: bold;
+    min-height: 24px;
+  }
+  #send-button {
+    background-color: #4CAF50; color: white;
+  }
+</style>
+</head>
+<body>
+
+<div id="score">Puan: 0</div>
+<img id="chef" src="https://e7.pngegg.com/pngimages/219/171/png-clipart-chef-drawing-cook-cuisine-cartoon-chef-miscellaneous-food-thumbnail.png" alt="Şef" />
+
+<div id="customer-selection">
+  <h2>Müşteri Seç</h2>
+  <div>
+    <button class="customer-btn" data-food="">Müşteri 1<br><small id="food1"></small></button>
+    <button class="customer-btn" data-food="">Müşteri 2<br><small id="food2"></small></button>
+  </div>
+</div>
+
+<div id="ingredient-selection" style="display:none;">
+  <h2>Malzemeler</h2>
+  <div id="ingredients-list">Malzemeler: </div>
+  <div id="ingredient-buttons"></div>
+  <button id="send-button">Gönder</button>
+  <div id="chef-message"></div>
+</div>
+
+<div id="end-screen" style="display:none;">
+  <h2>KünefeDöner oynadığın için teşekkürler!</h2>
+</div>
+
+<script>
+  const foodIngredients = {
+    "Hamburger": ["Ekmek", "Et", "Marul", "Ketçap"],
+    "İskender": ["Yoğurt", "Ekmek", "Et"],
+    "Dürüm": ["Ekmek", "Et", "Patates"]
+  };
+
+  const foods = Object.keys(foodIngredients);
+
+  // DOM
+  const food1Label = document.getElementById('food1');
+  const food2Label = document.getElementById('food2');
+  const customerButtons = document.querySelectorAll('.customer-btn');
+  const customerSelection = document.getElementById('customer-selection');
+  const ingredientSelection = document.getElementById('ingredient-selection');
+  const ingredientsListDiv = document.getElementById('ingredients-list');
+  const ingredientButtonsDiv = document.getElementById('ingredient-buttons');
+  const sendButton = document.getElementById('send-button');
+  const chefMessageDiv = document.getElementById('chef-message');
+  const endScreen = document.getElementById('end-screen');
+  const scoreDiv = document.getElementById('score');
+
+  let score = 0;
+  let selectedFood = null;
+  let remainingIngredients = [];
+  let wrongClicked = false;
+
+  // İlk müşteri yemekleri
+  function setRandomFoods() {
+    let f1 = foods[Math.floor(Math.random() * foods.length)];
+    let f2;
+    do {
+      f2 = foods[Math.floor(Math.random() * foods.length)];
+    } while (f2 === f1);
+    customerButtons[0].dataset.food = f1;
+    food1Label.textContent = f1;
+    customerButtons[1].dataset.food = f2;
+    food2Label.textContent = f2;
+  }
+  setRandomFoods();
+
+  // Müşteri seçildiğinde
+  customerButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedFood = btn.dataset.food;
+      remainingIngredients = [...foodIngredients[selectedFood]];
+      wrongClicked = false;
+      showIngredientScreen();
+    });
+  });
+
+  function showIngredientScreen() {
+    customerSelection.style.display = 'none';
+    ingredientSelection.style.display = 'block';
+    chefMessageDiv.textContent = '';
+    updateIngredientsList();
+    createIngredientButtons();
+  }
+
+  function updateIngredientsList() {
+    ingredientsListDiv.textContent = "Malzemeler: " + remainingIngredients.join(", ");
+  }
+
+  function createIngredientButtons() {
+    ingredientButtonsDiv.innerHTML = "";
+    const allIngredients = ["Ekmek", "Et", "Marul", "Ketçap", "Yoğurt", "Patates"];
+
+    allIngredients.forEach(ing => {
+      const btn = document.createElement('button');
+      btn.textContent = ing;
+      btn.addEventListener('click', () => {
+        if (remainingIngredients.includes(ing)) {
+          remainingIngredients = remainingIngredients.filter(i => i !== ing);
+          updateIngredientsList();
+          chefMessageDiv.textContent = '';
+        } else {
+          chefMessageDiv.textContent = "YANLIŞ MALZEME!!!";
+          wrongClicked = true;
+          setTimeout(() => { chefMessageDiv.textContent = ''; }, 1500);
+        }
+      });
+      ingredientButtonsDiv.appendChild(btn);
+    });
+  }
+
+  sendButton.addEventListener('click', () => {
+    if (remainingIngredients.length === 0 && !wrongClicked) {
+      // Tamamlandı, puan +5
+      score += 5;
+    } else {
+      // Eksik veya yanlış, puan -5
+      score -= 5;
+      if (score < 0) score = 0;
+    }
+    scoreDiv.textContent = "Puan: " + score;
+
+    if (score >= 30) {
+      endGame();
+      return;
+    }
+
+    // Yeni müşteri seçimine dön
+    customerSelection.style.display = 'block';
+    ingredientSelection.style.display = 'none';
+    setRandomFoods();
+  });
+
+  function endGame() {
+    ingredientSelection.style.display = 'none';
+    endScreen.style.display = 'block';
+  }
+</script>
+
+</body>
+</html>
