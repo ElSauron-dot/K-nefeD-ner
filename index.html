@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="google-site-verification" content="5erUS4gnK8jPbyyalGJYX_MhW_-3CRyS343ygihqevc" />
 <title>KünefeDöner</title>
 <style>
   body { font-family: Arial, sans-serif; background: #f8f8f8; margin: 0; padding: 0; }
@@ -87,7 +88,6 @@
   let remainingIngredients = [];
   let wrongClicked = false;
 
-  // İlk müşteri yemekleri
   function setRandomFoods() {
     let f1 = foods[Math.floor(Math.random() * foods.length)];
     let f2;
@@ -101,7 +101,6 @@
   }
   setRandomFoods();
 
-  // Müşteri seçildiğinde
   customerButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       selectedFood = btn.dataset.food;
@@ -147,10 +146,8 @@
 
   sendButton.addEventListener('click', () => {
     if (remainingIngredients.length === 0 && !wrongClicked) {
-      // Tamamlandı, puan +5
       score += 5;
     } else {
-      // Eksik veya yanlış, puan -5
       score -= 5;
       if (score < 0) score = 0;
     }
@@ -161,7 +158,6 @@
       return;
     }
 
-    // Yeni müşteri seçimine dön
     customerSelection.style.display = 'block';
     ingredientSelection.style.display = 'none';
     setRandomFoods();
