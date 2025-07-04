@@ -1,78 +1,122 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="google-site-verification" content="5erUS4gnK8jPbyyalGJYX_MhW_-3CRyS343ygihqevc" />
-<title>KünefeDöner</title>
-<style>
-  body { font-family: Arial, sans-serif; background: #f8f8f8; margin: 0; padding: 0; }
-  #chef {
-    position: fixed; bottom: 10px; right: 10px; width: 120px;
-  }
-  #score {
-    position: fixed; top: 10px; left: 10px;
-    font-weight: bold; font-size: 20px; color: #333;
-  }
-  #customer-selection, #ingredient-selection, #end-screen {
-    max-width: 600px; margin: 40px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; text-align: center;
-  }
-  button {
-    font-size: 18px; padding: 10px 20px; margin: 10px;
-    cursor: pointer;
-  }
-  #ingredients-list {
-    margin-top: 10px;
-    font-weight: bold;
-  }
-  #chef-message {
-    color: red;
-    margin-top: 20px;
-    font-weight: bold;
-    min-height: 24px;
-  }
-  #send-button {
-    background-color: #4CAF50; color: white;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-site-verification" content="5erUS4gnK8jPbyyalGJYX_MhW_-3CRyS343ygihqevc" />
+  <title>KünefeDöner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    body {
+      font-family: 'Luckiest Guy', cursive;
+      background: #f8f8f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+    }
+    #score, #timer {
+      position: fixed;
+      top: 10px;
+      font-size: 22px;
+      color: #333;
+      background: white;
+      padding: 4px 10px;
+      border-radius: 5px;
+    }
+    #score { left: 10px; }
+    #timer { right: 10px; }
+    #chef {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 120px;
+      transition: transform 0.5s ease;
+    }
+    .chef-celebrate {
+      transform: scale(1.5);
+    }
+    .center-box {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+    #customer-selection, #ingredient-selection, #end-screen {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #aaa;
+      text-align: center;
+    }
+    button {
+      font-size: 20px;
+      padding: 10px 20px;
+      margin: 10px;
+      cursor: pointer;
+    }
+    #ingredients-list {
+      margin-top: 10px;
+      font-size: 20px;
+    }
+    #chef-message {
+      color: red;
+      margin-top: 20px;
+      font-size: 18px;
+      min-height: 24px;
+    }
+    #send-button {
+      background-color: #4CAF50;
+      color: white;
+    }
+  </style>
 </head>
 <body>
-
 <div id="score">Puan: 0</div>
+<div id="timer">Süre: 20</div>
 <img id="chef" src="https://e7.pngegg.com/pngimages/219/171/png-clipart-chef-drawing-cook-cuisine-cartoon-chef-miscellaneous-food-thumbnail.png" alt="Şef" />
 
-<div id="customer-selection">
+<div class="center-box" id="customer-selection">
   <h2>Müşteri Seç</h2>
-  <div>
-    <button class="customer-btn" data-food="">Müşteri 1<br><small id="food1"></small></button>
-    <button class="customer-btn" data-food="">Müşteri 2<br><small id="food2"></small></button>
-  </div>
+  <button class="customer-btn" data-food="">Müşteri 1<br><small id="food1"></small></button>
+  <button class="customer-btn" data-food="">Müşteri 2<br><small id="food2"></small></button>
 </div>
 
 <div id="ingredient-selection" style="display:none;">
   <h2>Malzemeler</h2>
-  <div id="ingredients-list">Malzemeler: </div>
+  <div id="ingredients-list"></div>
   <div id="ingredient-buttons"></div>
   <button id="send-button">Gönder</button>
   <div id="chef-message"></div>
 </div>
 
-<div id="end-screen" style="display:none;">
-  <h2>KünefeDöner oynadığın için teşekkürler!</h2>
+<div id="end-screen" style="display:none; position:fixed; inset:0; background:black; color:white; display:flex; align-items:center; justify-content:center; z-index:9999; opacity:0; transition: opacity 2s;">
+  <h1 style="font-size:32px;">🌯 World of Döners oynadığınız için teşekkürler!</h1>
 </div>
 
 <script>
   const foodIngredients = {
     "Hamburger": ["Ekmek", "Et", "Marul", "Ketçap"],
     "İskender": ["Yoğurt", "Ekmek", "Et"],
-    "Dürüm": ["Ekmek", "Et", "Patates"]
+    "Dürüm": ["Ekmek", "Et", "Patates"],
+    "Künefe": ["Peynir", "Kadayıf"],
+    "Ayran": ["Yoğurt", "Su"]
   };
 
-  const foods = Object.keys(foodIngredients);
+  const comboMeals = [
+    ["Hamburger", "Ayran"],
+    ["İskender", "Künefe"],
+    ["Dürüm", "Ayran"],
+    ["Künefe"]
+  ];
 
-  // DOM
-  const food1Label = document.getElementById('food1');
-  const food2Label = document.getElementById('food2');
+  const allIngredients = ["Ekmek", "Et", "Marul", "Ketçap", "Yoğurt", "Patates", "Peynir", "Kadayıf", "Su"];
+
   const customerButtons = document.querySelectorAll('.customer-btn');
   const customerSelection = document.getElementById('customer-selection');
   const ingredientSelection = document.getElementById('ingredient-selection');
@@ -82,41 +126,52 @@
   const chefMessageDiv = document.getElementById('chef-message');
   const endScreen = document.getElementById('end-screen');
   const scoreDiv = document.getElementById('score');
+  const timerDiv = document.getElementById('timer');
+  const chefImg = document.getElementById('chef');
 
   let score = 0;
-  let selectedFood = null;
+  let selectedFoods = [];
   let remainingIngredients = [];
   let wrongClicked = false;
+  let timer;
+  let timeLeft = 20;
 
   function setRandomFoods() {
-    let f1 = foods[Math.floor(Math.random() * foods.length)];
-    let f2;
-    do {
-      f2 = foods[Math.floor(Math.random() * foods.length)];
-    } while (f2 === f1);
-    customerButtons[0].dataset.food = f1;
-    food1Label.textContent = f1;
-    customerButtons[1].dataset.food = f2;
-    food2Label.textContent = f2;
+    customerButtons.forEach((btn, i) => {
+      const combo = comboMeals[Math.floor(Math.random() * comboMeals.length)];
+      btn.dataset.food = combo.join(',');
+      btn.querySelector('small').textContent = combo.join(' + ');
+    });
   }
-  setRandomFoods();
+
+  function startTimer() {
+    clearInterval(timer);
+    timeLeft = 20;
+    timerDiv.textContent = `Süre: ${timeLeft}`;
+    timer = setInterval(() => {
+      timeLeft--;
+      timerDiv.textContent = `Süre: ${timeLeft}`;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        failOrder("Süre doldu! Sipariş iptal.");
+      }
+    }, 1000);
+  }
 
   customerButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      selectedFood = btn.dataset.food;
-      remainingIngredients = [...foodIngredients[selectedFood]];
+      selectedFoods = btn.dataset.food.split(',');
+      remainingIngredients = [];
+      selectedFoods.forEach(f => remainingIngredients.push(...foodIngredients[f.trim()]));
       wrongClicked = false;
-      showIngredientScreen();
+      customerSelection.style.display = 'none';
+      ingredientSelection.style.display = 'block';
+      updateIngredientsList();
+      createIngredientButtons();
+      chefMessageDiv.textContent = '';
+      startTimer();
     });
   });
-
-  function showIngredientScreen() {
-    customerSelection.style.display = 'none';
-    ingredientSelection.style.display = 'block';
-    chefMessageDiv.textContent = '';
-    updateIngredientsList();
-    createIngredientButtons();
-  }
 
   function updateIngredientsList() {
     ingredientsListDiv.textContent = "Malzemeler: " + remainingIngredients.join(", ");
@@ -124,8 +179,6 @@
 
   function createIngredientButtons() {
     ingredientButtonsDiv.innerHTML = "";
-    const allIngredients = ["Ekmek", "Et", "Marul", "Ketçap", "Yoğurt", "Patates"];
-
     allIngredients.forEach(ing => {
       const btn = document.createElement('button');
       btn.textContent = ing;
@@ -145,29 +198,42 @@
   }
 
   sendButton.addEventListener('click', () => {
+    clearInterval(timer);
     if (remainingIngredients.length === 0 && !wrongClicked) {
       score += 5;
+      scoreDiv.textContent = "Puan: " + score;
+      ingredientSelection.style.display = 'none';
+      chefImg.classList.add('chef-celebrate');
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      setTimeout(() => {
+        chefImg.classList.remove('chef-celebrate');
+        customerSelection.style.display = 'flex';
+        setRandomFoods();
+      }, 1000);
     } else {
-      score -= 5;
-      if (score < 0) score = 0;
+      failOrder("Eksik veya yanlış malzeme.");
     }
-    scoreDiv.textContent = "Puan: " + score;
 
     if (score >= 30) {
-      endGame();
-      return;
+      endScreen.style.display = 'flex';
+      setTimeout(() => { endScreen.style.opacity = 1; }, 100);
     }
-
-    customerSelection.style.display = 'block';
-    ingredientSelection.style.display = 'none';
-    setRandomFoods();
   });
 
-  function endGame() {
-    ingredientSelection.style.display = 'none';
-    endScreen.style.display = 'block';
+  function failOrder(msg) {
+    score -= 5;
+    if (score < 0) score = 0;
+    scoreDiv.textContent = "Puan: " + score;
+    chefMessageDiv.textContent = msg;
+    setTimeout(() => {
+      chefMessageDiv.textContent = '';
+      customerSelection.style.display = 'flex';
+      ingredientSelection.style.display = 'none';
+      setRandomFoods();
+    }, 1500);
   }
-</script>
 
+  setRandomFoods();
+</script>
 </body>
 </html>
