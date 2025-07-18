@@ -2,29 +2,21 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="World of Doners - En lezzetli oyun deneyimini yaşayın! İster webde oynayın, ister uygulama olarak indirin." />
-  <meta name="keywords" content="doner, oyun, indir, web oyunu, eğlence, world of doners" />
-  <meta name="author" content="MrKunefe" />
-  <meta name="robots" content="index, follow" />
-  <meta name="googlebot" content="index, follow" />
-  <meta name="theme-color" content="#FFD700" />
   <title>World of Doners</title>
-
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-
     html, body {
       height: 100%;
       overflow: hidden;
-      font-family: sans-serif;
       background: black;
+      font-family: sans-serif;
     }
-
     .container {
       display: flex;
       flex-direction: row;
@@ -32,7 +24,6 @@
       width: 100vw;
       position: relative;
     }
-
     .side {
       flex: 1;
       display: flex;
@@ -41,33 +32,32 @@
       position: relative;
       overflow: hidden;
       transition: 0.4s ease-in-out;
+      cursor: pointer;
     }
-
-    .left {
-      background-color: #222;
-    }
-
-    .right {
-      background-color: #444;
-    }
-
+    .left { background-color: #222; }
+    .right { background-color: #444; }
     /* Kan efekti */
-    .side:hover::after {
+    .side::after {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: url('https://www.pngmart.com/files/3/Blood-Splatter-PNG-Image.png') no-repeat center center;
-      background-size: cover;
-      opacity: 0.4;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -40%) scale(0);
+      width: 300px;
+      height: 300px;
+      background: url('assets/lekekan.png') no-repeat center center;
+      background-size: contain;
+      opacity: 0;
       pointer-events: none;
-      z-index: 2;
+      z-index: 10;
+      transition: transform 0.6s ease-out, opacity 0.6s ease-out;
     }
-
+    .side:hover::after {
+      transform: translate(-50%, -40%) scale(1);
+      opacity: 0.85;
+    }
     button {
-      font-size: 1.2rem;
+      font-size: 1.4rem;
       padding: 1rem 2rem;
       border: none;
       border-radius: 10px;
@@ -78,11 +68,9 @@
       z-index: 3;
       transition: transform 0.2s ease;
     }
-
     button:hover {
       transform: scale(1.05);
     }
-
     .lightning {
       position: absolute;
       left: 50%;
@@ -93,7 +81,6 @@
       z-index: 5;
       pointer-events: none;
     }
-
     .zigzag {
       width: 100%;
       height: 100%;
@@ -105,13 +92,9 @@
       animation: dash 1.5s ease-in-out forwards, flicker 2s infinite;
       filter: drop-shadow(0 0 10px white);
     }
-
     @keyframes dash {
-      to {
-        stroke-dashoffset: 0;
-      }
+      to { stroke-dashoffset: 0; }
     }
-
     @keyframes flicker {
       0%, 100% { opacity: 1; }
       20% { opacity: 0.4; }
@@ -122,11 +105,13 @@
   </style>
 </head>
 <body>
+  <audio id="tokatSound" src="assets/tokat.mp3" preload="auto"></audio>
+
   <div class="container">
-    <div class="side left" onclick="downloadApp()">
+    <div class="side left" onclick="playSoundAndDownload()">
       <button>Uygulamayı İndir!</button>
     </div>
-    <div class="side right" onclick="goToWeb()">
+    <div class="side right" onclick="playSoundAndGo()">
       <button>Web'e Oyna!</button>
     </div>
 
@@ -137,14 +122,36 @@
     </div>
   </div>
 
-  <script>
-    function downloadApp() {
-      window.open('https://drive.google.com/drive/folders/1a0NsoxK3cijjfMzSZ-DaUuFe15ML7epz?usp=sharing', '_blank');
-    }
+<script>
+  const audioElement = document.getElementById('tokatSound');
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioCtx.createMediaElementSource(audioElement);
+  const gainNode = audioCtx.createGain();
+  gainNode.gain.value = 5; // 5 kat ses artırma
 
-    function goToWeb() {
-      window.location.href = 'oyun.html';
+  source.connect(gainNode).connect(audioCtx.destination);
+
+  function playSound() {
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
     }
-  </script>
+    audioElement.currentTime = 0;
+    audioElement.play();
+  }
+
+  function playSoundAndDownload() {
+    playSound();
+    setTimeout(() => {
+      window.open('https://drive.google.com/drive/folders/1a0NsoxK3cijjfMzSZ-DaUuFe15ML7epz?usp=sharing', '_blank');
+    }, 150);
+  }
+
+  function playSoundAndGo() {
+    playSound();
+    setTimeout(() => {
+      window.location.href = 'oyun.html';
+    }, 150);
+  }
+</script>
 </body>
 </html>
