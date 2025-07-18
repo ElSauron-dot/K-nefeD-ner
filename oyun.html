@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>World Of Döners</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: 'Luckiest Guy', cursive; }
+    body, html {
+      margin: 0; padding: 0; height: 100%; background: #f8f8f8;
+      display: flex; justify-content: center; align-items: center;
+    }
+    #game-container {
+      width: 100%; max-width: 800px; padding: 20px;
+    }
+    #score, #timer {
+      position: fixed; top: 10px; background: white;
+      padding: 5px 10px; border-radius: 5px;
+      font-size: 20px; z-index: 1000;
+    }
+    #score { left: 10px; }
+    #timer { right: 10px; }
+    #chef {
+      position: fixed; bottom: 10px; right: 10px;
+      width: 100px; transition: transform 0.5s ease;
+    }
+    .chef-celebrate { transform: scale(1.5); }
+    .center-box {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 20px;
+    }
+    button {
+      font-size: 18px; padding: 10px 20px; cursor: pointer;
+    }
+    #customer-selection, #ingredient-selection {
+      background: white; padding: 20px;
+      border-radius: 10px; box-shadow: 0 0 10px #aaa;
+      margin-top: 20px;
+    }
+    #ingredient-buttons button {
+      margin: 5px;
+    }
+    #end-screen {
+      position: fixed; inset: 0; background: black;
+      color: white; font-size: 28px;
+      display: flex; justify-content: center;
+      align-items: center; opacity: 0; transition: opacity 2s;
+      pointer-events: none; z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+<div id="game-container">
+  <div id="score">Puan: 0</div>
+  <div id="timer">Süre: 20</div>
+  <img id="chef" src="https://e7.pngegg.com/pngimages/219/171/png-clipart-chef-drawing-cook-cuisine-cartoon-chef-miscellaneous-food-thumbnail.png" alt="Şef" />
+  
+  <div class="center-box" id="customer-selection">
+    <h2>Müşteri Seç</h2>
+    <button class="customer-btn" id="btn1"><span>Müşteri 1</span><br><small id="food1"></small></button>
+    <button class="customer-btn" id="btn2"><span>Müşteri 2</span><br><small id="food2"></small></button>
+  </div>
+
+  <div id="ingredient-selection" style="display:none;" class="center-box">
+    <h2>Malzemeler</h2>
+    <div id="ingredients-list"></div>
+    <div id="ingredient-buttons"></div>
+    <button id="send-button">Gönder</button>
+    <div id="chef-message" style="color:red; font-size: 18px;"></div>
+  </div>
+
+  <div id="end-screen">🌯 World Of Döners oynadığınız için teşekkürler!</div>
+</div>
+
+<script>
+  const foodIngredients = {
+    "Hamburger": ["Ekmek", "Et", "Marul", "Ketçap"],
+    "İskender": ["Yoğurt", "Ekmek", "Et"],
+    "Dürüm": ["Ekmek", "Et", "Patates"],
+    "Künefe": ["Peynir", "Kadayıf"],
+    "Ayran": ["Yoğurt", "Su"]
+  };
+
+  const comboMeals = [
+    ["Hamburger", "Ayran"],
+    ["İskender", "Künefe"],
+    ["Dürüm", "Ayran"],
+    ["Künefe"]
+  ];
+
+  const allIngredients = [...new Set(Object.values(foodIngredients).flat())];
+
+  const customerButtons = document.querySelectorAll('.customer-btn');
+  const food1 = document.getElementById('food1');
+  const food2 = document.getElementById('food2');
+  const customerSelection = document.getElementById('customer-selection');
+  const ingredientSelection = document.getElementById('ingredient-selection');
+  const ingredientsListDiv = document.getElementById('ingredients-list');
+  const ingredientButtonsDiv = document.getElementById('ingredient-buttons');
+  const sendButton = document.getElementById('send-button');
+  const chefMessageDiv = document.getElementById('chef-message');
+  const endScreen = document.getElementById('end-screen');
+  const scoreDiv = document.getElementById('score');
+  const timerDiv = document.getElementById('timer');
+  const chefImg = document.getElementById('chef');
+
+  let score = 0;
+  let selectedFoods = [];
+  let remainingIngredients = [];
+  let wrongClicked = false;
+  let timer;
+  let timeLeft = 20;
+  let gameEnded = false;
+
+  function setRandomFoods() {
+    const combo1 = comboMeals[Math.floor(Math.random() * comboMeals.length)];
+    const combo2 = comboMeals[Math.floor(Math.random() * comboMeals.length)];
+    customerButtons[0].setAttribute('data-food', combo1.join(','));
+    customerButtons[1].setAttribute('data-food', combo2.join(','));
+    food1.textContent = combo1.join(' + ');
+    food2.textContent = combo2.join(' + ');
+  }
+
+  function startTimer() {
+    clearInterval(timer);
+    timeLeft = 20;
+    timerDiv.textContent = `Süre: ${timeLeft}`;
+    timer = setInterval(() => {
+      timeLeft--;
+      timerDiv.textContent = `Süre: ${timeLeft}`;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        failOrder("Süre doldu!");
+      }
+    }, 1000);
+  }
+
+  customerButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (gameEnded) return;
+      const foodData = btn.getAttribute('data-food');
+      if (!foodData) return;
+      selectedFoods = foodData.split(',');
+      remainingIngredients = [];
+      selectedFoods.forEach(f => remainingIngredients.push(...foodIngredients[f.trim()]));
+      wrongClicked = false;
+      customerSelection.style.display = 'none';
+      ingredientSelection.style.display = 'flex';
+      updateIngredientsList();
+      createIngredientButtons();
+      chefMessageDiv.textContent = '';
+      startTimer();
+    });
+  });
+
+  function updateIngredientsList() {
+    ingredientsListDiv.textContent = "Malzemeler: " + remainingIngredients.join(", ");
+  }
+
+  function createIngredientButtons() {
+    ingredientButtonsDiv.innerHTML = "";
+    allIngredients.forEach(ing => {
+      const btn = document.createElement('button');
+      btn.textContent = ing;
+      btn.addEventListener('click', () => {
+        if (remainingIngredients.includes(ing)) {
+          remainingIngredients = remainingIngredients.filter(i => i !== ing);
+          updateIngredientsList();
+        } else {
+          chefMessageDiv.textContent = "YANLIŞ MALZEME!";
+          wrongClicked = true;
+          setTimeout(() => { chefMessageDiv.textContent = ""; }, 1500);
+        }
+      });
+      ingredientButtonsDiv.appendChild(btn);
+    });
+  }
+
+  sendButton.addEventListener('click', () => {
+    clearInterval(timer);
+    if (remainingIngredients.length === 0 && !wrongClicked) {
+      score += 5;
+      scoreDiv.textContent = "Puan: " + score;
+      ingredientSelection.style.display = 'none';
+      chefImg.classList.add('chef-celebrate');
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      setTimeout(() => {
+        chefImg.classList.remove('chef-celebrate');
+        if (score >= 30) {
+          endScreen.style.opacity = 1;
+          gameEnded = true;
+        } else {
+          customerSelection.style.display = 'flex';
+          setRandomFoods();
+        }
+      }, 1000);
+    } else {
+      failOrder("Yanlış veya eksik malzeme!");
+    }
+  });
+
+  function failOrder(msg) {
+    score -= 5;
+    if (score < 0) score = 0;
+    scoreDiv.textContent = "Puan: " + score;
+    chefMessageDiv.textContent = msg;
+    setTimeout(() => {
+      chefMessageDiv.textContent = "";
+      customerSelection.style.display = 'flex';
+      ingredientSelection.style.display = 'none';
+      setRandomFoods();
+    }, 1500);
+  }
+
+  window.onload = () => {
+    setRandomFoods();
+    customerSelection.style.display = 'flex';
+  };
+</script>
+</body>
+</html>
