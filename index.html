@@ -1,244 +1,119 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="google-site-verification" content="5erUS4gnK8jPbyyalGJYX_MhW_-3CRyS343ygihqevc" />
-  <title>KünefeDöner</title>
-  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="World of Doners - En lezzetli oyun deneyimini yaşayın! İster webde oynayın, ister uygulama olarak indirin." />
+  <meta name="keywords" content="doner, oyun, indir, web oyunu, eğlence, world of doners" />
+  <meta name="author" content="MrKunefe" />
+  <meta name="robots" content="index, follow" />
+  <meta name="googlebot" content="index, follow" />
+  <meta name="theme-color" content="#FFD700" />
+  <title>World of Doners</title>
+
   <style>
-    body {
-      font-family: 'Luckiest Guy', cursive;
-      background: #f8f8f8;
+    * {
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
-      padding-top: 60px;
-      max-width: 800px;
-      margin: auto;
-      height: 100vh;
+      box-sizing: border-box;
     }
-    #score, #timer {
-      position: fixed;
-      top: 10px;
-      font-size: 22px;
-      color: #333;
-      background: white;
-      padding: 4px 10px;
-      border-radius: 5px;
-    }
-    #score { left: 10px; }
-    #timer { right: 10px; }
-    #chef {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      width: 120px;
-      transition: transform 0.5s ease;
-    }
-    .chef-celebrate {
-      transform: scale(1.5);
-    }
-    .center-box {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+
+    html, body {
       height: 100%;
+      overflow: hidden;
+      font-family: sans-serif;
     }
-    #customer-selection, #ingredient-selection, #end-screen {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #aaa;
-      text-align: center;
+
+    .container {
+      display: flex;
+      height: 100vh;
+      position: relative;
     }
-    button {
-      font-size: 20px;
-      padding: 10px 20px;
-      margin: 10px;
-      cursor: pointer;
-    }
-    #ingredients-list {
-      margin-top: 10px;
-      font-size: 20px;
-    }
-    #chef-message {
-      color: red;
-      margin-top: 20px;
-      font-size: 18px;
-      min-height: 24px;
-    }
-    #send-button {
-      background-color: #4CAF50;
+
+    .side {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
       color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .left {
+      background: #222;
+    }
+
+    .right {
+      background: #444;
+    }
+
+    .side:hover {
+      filter: brightness(1.2);
+    }
+
+    .lightning {
+      position: absolute;
+      width: 5px;
+      background: white;
+      height: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: flicker 1s ease-in-out 1;
+      z-index: 10;
+    }
+
+    @keyframes flicker {
+      0%   { opacity: 0; }
+      10%  { opacity: 1; }
+      20%  { opacity: 0.2; }
+      30%  { opacity: 1; }
+      40%  { opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    button {
+      font-size: 1.2rem;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 10px;
+      background-color: gold;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    button:hover {
+      transform: scale(1.05);
     }
   </style>
 </head>
 <body>
-<div id="score">Puan: 0</div>
-<div id="timer">Süre: 20</div>
-<img id="chef" src="https://e7.pngegg.com/pngimages/219/171/png-clipart-chef-drawing-cook-cuisine-cartoon-chef-miscellaneous-food-thumbnail.png" alt="Şef" />
+  <div class="container">
+    <div class="side left" onclick="downloadApp()">
+      <button>Uygulamayı İndir!</button>
+    </div>
+    <div class="side right" onclick="goToWeb()">
+      <button>Web'e Oyna!</button>
+    </div>
+    <div class="lightning"></div>
+  </div>
 
-<div class="center-box" id="customer-selection">
-  <h2>Müşteri Seç</h2>
-  <button class="customer-btn" data-food="">Müşteri 1<br><small id="food1"></small></button>
-  <button class="customer-btn" data-food="">Müşteri 2<br><small id="food2"></small></button>
-</div>
-
-<div id="ingredient-selection" style="display:none;">
-  <h2>Malzemeler</h2>
-  <div id="ingredients-list"></div>
-  <div id="ingredient-buttons"></div>
-  <button id="send-button">Gönder</button>
-  <div id="chef-message"></div>
-</div>
-
-<div id="end-screen" style="display:none; position:fixed; inset:0; background:black; color:white; display:flex; align-items:center; justify-content:center; z-index:9999; opacity:0; transition: opacity 2s;">
-  <h1 style="font-size:32px;">🌯 World of Döners oynadığınız için teşekkürler!</h1>
-</div>
-
-<script>
-  const foodIngredients = {
-    "Hamburger": ["Ekmek", "Et", "Marul", "Ketçap"],
-    "İskender": ["Yoğurt", "Ekmek", "Et"],
-    "Dürüm": ["Ekmek", "Et", "Patates"],
-    "Künefe": ["Peynir", "Kadayıf"],
-    "Ayran": ["Yoğurt", "Su"]
-  };
-
-  const comboMeals = [
-    ["Hamburger", "Ayran"],
-    ["İskender", "Künefe"],
-    ["Dürüm", "Ayran"],
-    ["Künefe"]
-  ];
-
-  const allIngredients = ["Ekmek", "Et", "Marul", "Ketçap", "Yoğurt", "Patates", "Peynir", "Kadayıf", "Su"];
-
-  const customerButtons = document.querySelectorAll('.customer-btn');
-  const customerSelection = document.getElementById('customer-selection');
-  const ingredientSelection = document.getElementById('ingredient-selection');
-  const ingredientsListDiv = document.getElementById('ingredients-list');
-  const ingredientButtonsDiv = document.getElementById('ingredient-buttons');
-  const sendButton = document.getElementById('send-button');
-  const chefMessageDiv = document.getElementById('chef-message');
-  const endScreen = document.getElementById('end-screen');
-  const scoreDiv = document.getElementById('score');
-  const timerDiv = document.getElementById('timer');
-  const chefImg = document.getElementById('chef');
-
-  let score = 0;
-  let selectedFoods = [];
-  let remainingIngredients = [];
-  let wrongClicked = false;
-  let timer;
-  let timeLeft = 20;
-
-  function setRandomFoods() {
-    customerButtons.forEach((btn, i) => {
-      const combo = comboMeals[Math.floor(Math.random() * comboMeals.length)];
-      btn.dataset.food = combo.join(',');
-      btn.querySelector('small').textContent = combo.join(' + ');
-    });
-  }
-
-  function startTimer() {
-    clearInterval(timer);
-    timeLeft = 20;
-    timerDiv.textContent = `Süre: ${timeLeft}`;
-    timer = setInterval(() => {
-      timeLeft--;
-      timerDiv.textContent = `Süre: ${timeLeft}`;
-      if (timeLeft <= 0) {
-        clearInterval(timer);
-        failOrder("Süre doldu! Sipariş iptal.");
-      }
-    }, 1000);
-  }
-
-  customerButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedFoods = btn.dataset.food.split(',');
-      remainingIngredients = [];
-      selectedFoods.forEach(f => remainingIngredients.push(...foodIngredients[f.trim()]));
-      wrongClicked = false;
-      customerSelection.style.display = 'none';
-      ingredientSelection.style.display = 'block';
-      updateIngredientsList();
-      createIngredientButtons();
-      chefMessageDiv.textContent = '';
-      startTimer();
-    });
-  });
-
-  function updateIngredientsList() {
-    ingredientsListDiv.textContent = "Malzemeler: " + remainingIngredients.join(", ");
-  }
-
-  function createIngredientButtons() {
-    ingredientButtonsDiv.innerHTML = "";
-    allIngredients.forEach(ing => {
-      const btn = document.createElement('button');
-      btn.textContent = ing;
-      btn.addEventListener('click', () => {
-        if (remainingIngredients.includes(ing)) {
-          remainingIngredients = remainingIngredients.filter(i => i !== ing);
-          updateIngredientsList();
-          chefMessageDiv.textContent = '';
-        } else {
-          chefMessageDiv.textContent = "YANLIŞ MALZEME!!!";
-          wrongClicked = true;
-          setTimeout(() => { chefMessageDiv.textContent = ''; }, 1500);
-        }
-      });
-      ingredientButtonsDiv.appendChild(btn);
-    });
-  }
-
-  sendButton.addEventListener('click', () => {
-    clearInterval(timer);
-    if (remainingIngredients.length === 0 && !wrongClicked) {
-      score += 5;
-      scoreDiv.textContent = "Puan: " + score;
-      ingredientSelection.style.display = 'none';
-      chefImg.classList.add('chef-celebrate');
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-      setTimeout(() => {
-        chefImg.classList.remove('chef-celebrate');
-        customerSelection.style.display = 'flex';
-        setRandomFoods();
-      }, 1000);
-    } else {
-      failOrder("Eksik veya yanlış malzeme.");
+  <script>
+    function downloadApp() {
+      window.location.href = 'assets/WorldOfDoners Setup 1.0.0.exe';
     }
 
-    if (score >= 30) {
-      endScreen.style.display = 'flex';
-      setTimeout(() => { endScreen.style.opacity = 1; }, 100);
+    function goToWeb() {
+      window.location.href = 'oyun.html';
     }
-  });
 
-  function failOrder(msg) {
-    score -= 5;
-    if (score < 0) score = 0;
-    scoreDiv.textContent = "Puan: " + score;
-    chefMessageDiv.textContent = msg;
+    // Şimşeği belirli süre sonra kaldır
     setTimeout(() => {
-      chefMessageDiv.textContent = '';
-      customerSelection.style.display = 'flex';
-      ingredientSelection.style.display = 'none';
-      setRandomFoods();
-    }, 1500);
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    setRandomFoods();
-  });
-</script>
+      document.querySelector('.lightning').style.display = 'none';
+    }, 1200);
+  </script>
 </body>
 </html>
